@@ -1,0 +1,10 @@
+/* เสริมสไตล์เล็กน้อยนอกเหนือจาก Tailwind */
+.choice {
+  cursor: pointer;
+  transition: transform .05s ease;
+}
+.choice:active { transform: translateY(1px); }
+
+/* สถานะถูก/ผิด */
+.choice.correct { outline: 2px solid #22c55e; }
+.choice.wrong   { outline: 2px solid #ef4444; }
