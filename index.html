@@ -4,94 +4,71 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Sensor Quiz • 4 ตัวเลือก</title>
-  <!-- Tailwind via CDN -->
+  <!-- Tailwind CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="styles.css" />
 </head>
-<body class="min-h-screen bg-slate-900 text-slate-100">
-  <header class="sticky top-0 z-10 backdrop-blur bg-slate-900/70 border-b border-slate-800">
+<body class="min-h-screen bg-slate-50 text-slate-900">
+  <header class="sticky top-0 z-10 backdrop-blur bg-white/80 border-b border-slate-200">
     <div class="max-w-5xl mx-auto px-4 py-3 flex flex-col gap-3">
       <div class="flex items-center justify-between">
-        <h1 class="text-lg font-semibold">Sensor Quiz</h1>
+        <h1 class="text-lg font-semibold text-sky-700">Sensor Quiz</h1>
         <div class="flex gap-2 items-center">
           <input id="numQuestions" type="number" min="5" max="50" value="10"
-                 class="w-20 bg-slate-800 border border-slate-700 rounded px-3 py-1.5"
+                 class="w-24 bg-white border border-slate-300 rounded-lg px-3 py-1.5"
                  title="จำนวนข้อในชุดนี้" />
           <button id="newSetBtn"
-            class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded font-medium">
+            class="px-4 py-2 rounded-lg font-medium bg-sky-600 text-white hover:bg-sky-500">
             เริ่มชุดใหม่
           </button>
         </div>
       </div>
 
-      <!-- แถบเลือกเรื่อง -->
+      <!-- เลือกเรื่อง -->
       <div class="flex flex-wrap items-center gap-2 text-sm">
-        <span class="text-slate-300 mr-1">ทำตามเรื่อง:</span>
-        <button class="topic-btn px-3 py-1.5 rounded border border-slate-700 bg-slate-800 hover:bg-slate-700"
-                data-topic="all">ทั้งหมด</button>
-        <button class="topic-btn px-3 py-1.5 rounded border border-slate-700 bg-slate-800 hover:bg-slate-700"
-                data-topic="ESP32">ESP32</button>
-        <button class="topic-btn px-3 py-1.5 rounded border border-slate-700 bg-slate-800 hover:bg-slate-700"
-                data-topic="Calibration">Calibration</button>
-        <button class="topic-btn px-3 py-1.5 rounded border border-slate-700 bg-slate-800 hover:bg-slate-700"
-                data-topic="Voltage">Voltage</button>
-        <button class="topic-btn px-3 py-1.5 rounded border border-slate-700 bg-slate-800 hover:bg-slate-700"
-                data-topic="Current">Current</button>
-        <button class="topic-btn px-3 py-1.5 rounded border border-slate-700 bg-slate-800 hover:bg-slate-700"
-                data-topic="MQ135">MQ-135</button>
-        <button class="topic-btn px-3 py-1.5 rounded border border-slate-700 bg-slate-800 hover:bg-slate-700"
-                data-topic="LoadCell">Load Cell</button>
-        <button class="topic-btn px-3 py-1.5 rounded border border-slate-700 bg-slate-800 hover:bg-slate-700"
-                data-topic="MAX30100">MAX30100</button>
-        <button class="topic-btn px-3 py-1.5 rounded border border-slate-700 bg-slate-800 hover:bg-slate-700"
-                data-topic="KType">K-Type/MAX6675</button>
-        <button class="topic-btn px-3 py-1.5 rounded border border-slate-700 bg-slate-800 hover:bg-slate-700"
-                data-topic="DS18B20">DS18B20</button>
-        <button class="topic-btn px-3 py-1.5 rounded border border-slate-700 bg-slate-800 hover:bg-slate-700"
-                data-topic="Inductive">Inductive</button>
-        <button class="topic-btn px-3 py-1.5 rounded border border-slate-700 bg-slate-800 hover:bg-slate-700"
-                data-topic="Comm">Communication</button>
-        <button class="topic-btn px-3 py-1.5 rounded border border-slate-700 bg-slate-800 hover:bg-slate-700"
-                data-topic="WiFi">Wi-Fi</button>
-        <button class="topic-btn px-3 py-1.5 rounded border border-slate-700 bg-slate-800 hover:bg-slate-700"
-                data-topic="BLE">BLE</button>
-        <button class="topic-btn px-3 py-1.5 rounded border border-slate-700 bg-slate-800 hover:bg-slate-700"
-                data-topic="LoRa">LoRa/LoRaWAN</button>
-        <button class="topic-btn px-3 py-1.5 rounded border border-slate-700 bg-slate-800 hover:bg-slate-700"
-                data-topic="Zigbee">Zigbee</button>
-        <button class="topic-btn px-3 py-1.5 rounded border border-slate-700 bg-slate-800 hover:bg-slate-700"
-                data-topic="NBIoT">NB-IoT</button>
+        <span class="text-slate-600 mr-1">ทำตามเรื่อง:</span>
+        <button class="topic-btn pill" data-topic="all">ทั้งหมด</button>
+        <button class="topic-btn pill" data-topic="ESP32">ESP32</button>
+        <button class="topic-btn pill" data-topic="Calibration">Calibration</button>
+        <button class="topic-btn pill" data-topic="Voltage">Voltage</button>
+        <button class="topic-btn pill" data-topic="Current">Current</button>
+        <button class="topic-btn pill" data-topic="MQ135">MQ-135</button>
+        <button class="topic-btn pill" data-topic="LoadCell">Load Cell</button>
+        <button class="topic-btn pill" data-topic="MAX30100">MAX30100</button>
+        <button class="topic-btn pill" data-topic="KType">K-Type/MAX6675</button>
+        <button class="topic-btn pill" data-topic="DS18B20">DS18B20</button>
+        <button class="topic-btn pill" data-topic="Inductive">Inductive</button>
+        <button class="topic-btn pill" data-topic="Comm">Communication</button>
+        <button class="topic-btn pill" data-topic="WiFi">Wi-Fi</button>
+        <button class="topic-btn pill" data-topic="BLE">BLE</button>
+        <button class="topic-btn pill" data-topic="LoRa">LoRa/LoRaWAN</button>
+        <button class="topic-btn pill" data-topic="Zigbee">Zigbee</button>
+        <button class="topic-btn pill" data-topic="NBIoT">NB-IoT</button>
       </div>
     </div>
   </header>
 
   <main class="max-w-5xl mx-auto px-4 py-6">
-    <section id="status" class="mb-4 text-sm text-slate-300">
-      เรื่อง: <span id="topicLabel">ทั้งหมด</span> •
+    <section id="status" class="mb-4 text-sm text-slate-600">
+      เรื่อง: <span id="topicLabel" class="font-medium text-sky-700">ทั้งหมด</span> •
       ข้อที่ <span id="qIndex">0</span>/<span id="qTotal">0</span> •
       คะแนน: <span id="score">0</span>
     </section>
 
-    <section id="card" class="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 shadow-xl">
+    <section id="card" class="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
       <div id="question" class="text-xl font-semibold leading-relaxed"></div>
       <ul id="choices" class="mt-5 grid gap-3"></ul>
 
       <div id="feedback" class="mt-4 text-sm"></div>
 
       <div class="mt-6 flex gap-2">
-        <button id="nextBtn" class="px-4 py-2 bg-slate-800 border border-slate-700 rounded hover:bg-slate-700">
-          ข้อต่อไป (→)
-        </button>
-        <button id="revealBtn" class="px-4 py-2 bg-amber-600 hover:bg-amber-500 rounded">
-          เฉลย/อธิบาย (Space)
-        </button>
-        <button id="retryBtn" class="ml-auto px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded hidden">
-          ทำใหม่อีกรอบ
-        </button>
+        <button id="nextBtn" class="btn-secondary">ข้อต่อไป (→)</button>
+        <button id="revealBtn" class="btn-warn">เฉลย/อธิบาย (Space)</button>
+        <button id="retryBtn" class="ml-auto btn-success hidden">ทำใหม่อีกรอบ</button>
       </div>
     </section>
 
-    <section class="mt-6 text-xs text-slate-400">
+    <section class="mt-6 text-xs text-slate-500">
       อ้างอิงเนื้อหาจากสรุปของคุณ (ESP32/Sensors/Comms/Calibration) 
     </section>
   </main>
