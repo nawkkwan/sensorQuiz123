@@ -1,6 +1,5 @@
-/* Quiz Engine — Topic filter + New set reset + Always explanation + Badges */
+/* Quiz Engine — Topic filter + New set reset + Always explanation + Badges + Safe compare */
 (function(){
-  // ต้องมี window.QUIZ_BANK จาก data.js (มี {q,a,tag,exp?})
   const BANK = (window.QUIZ_BANK || []).slice();
 
   const els = {
@@ -19,40 +18,38 @@
   };
   const topicBtns = Array.from(document.querySelectorAll('.topic-btn'));
 
-  // คำอธิบายเริ่มต้นตามหมวด (ใช้เมื่อไม่มี exp ในข้อ)
+  // อธิบายเริ่มต้นตามหมวด (ใช้เมื่อไม่มี exp ในข้อ)
   const defaultExp = {
-    ESP32: "สรุปสเปกและโหมดพลังงานของ ESP32 แบบใช้งานจริง",
-    Calibration: "คาลิเบรตเพื่อลดอคติ/ออฟเซ็ตและปรับสเกลให้ตรงมาตรฐาน",
-    Voltage: "ตัวแบ่งแรงดัน (R1/R2) แล้วอ่านด้วย ADC; คูณ divider gain เพื่อหา Vin",
-    Current: "ACS712 แปลงสนามแม่เหล็กเป็นแรงดัน ต้องลบ offset ก่อนคำนวณ",
-    MQ135: "ใช้อัตราส่วน Rs/Ro และกราฟ log-log ใน datasheet เพื่อหา PPM",
-    LoadCell: "Strain gauge ใน Wheatstone bridge + HX711 ขยายก่อนคาลิเบรตเชิงเส้น",
-    MAX30100: "หา IBI จากยอดคลื่น → BPM = 60000/Δt; smoothing/threshold ช่วยให้เสถียร",
-    KType: "Thermocouple แรงดันเล็กมาก ต้องชดเชย cold-junction (MAX6675)",
-    DS18B20: "โพรบดิจิทัล 1-Wire ความละเอียดสูง เหมาะงานทั่วไป",
-    Inductive: "สนามความถี่สูงเหนี่ยวนำ eddy current ในโลหะทำให้แอมพลิจูดลด",
-    Comm: "HTTP = Request/Response; MQTT = Pub/Sub ผ่าน Broker",
-    WiFi: "Throughput < Data rate เพราะ overhead/ชน; ใช้ช่อง 1/6/11 ลดรบกวน",
-    BLE: "พลังงานต่ำ ส่งเป็นช่วง; มีช่องโฆษณา 37/38/39",
-    LoRa: "LoRa=PHY; LoRaWAN=MAC/Network (Star-of-Stars, Class A ประหยัดสุด)",
-    Zigbee: "Mesh self-forming/self-healing บน 2.4 GHz",
-    NBIoT: "LPWAN ของเครือข่ายมือถือ มี PSM/eDRX ประหยัดพลังงาน",
+    ESP32:"สรุปสเปกและโหมดพลังงานของ ESP32 แบบใช้งานจริง",
+    Calibration:"คาลิเบรตเพื่อลดอคติ/ออฟเซ็ตและปรับสเกลให้ตรงมาตรฐาน",
+    Voltage:"ตัวแบ่งแรงดัน (R1/R2) แล้วอ่านด้วย ADC; คูณ divider gain เพื่อหา Vin",
+    Current:"ACS712 แปลงสนามแม่เหล็กเป็นแรงดัน ต้องลบ offset ก่อนคำนวณ",
+    MQ135:"ใช้อัตราส่วน Rs/Ro และกราฟ log-log ใน datasheet เพื่อหา PPM",
+    LoadCell:"Strain gauge ใน Wheatstone bridge + HX711 ขยายก่อนคาลิเบรตเชิงเส้น",
+    MAX30100:"หา IBI → BPM = 60000/Δt; smoothing/threshold ช่วยให้เสถียร",
+    KType:"Thermocouple แรงดันเล็ก ต้องชดเชย cold-junction (MAX6675)",
+    DS18B20:"โพรบดิจิทัล 1-Wire ความละเอียดสูง เหมาะงานทั่วไป",
+    Inductive:"สนามความถี่สูงเหนี่ยวนำ eddy current ในโลหะทำให้แอมพลิจูดลด",
+    Comm:"HTTP = Request/Response; MQTT = Pub/Sub ผ่าน Broker",
+    WiFi:"Throughput < Data rate เพราะ overhead/ชน; ใช้ช่อง 1/6/11 ลดรบกวน",
+    BLE:"พลังงานต่ำ ส่งเป็นช่วง; มีช่องโฆษณา 37/38/39",
+    LoRa:"LoRa=PHY; LoRaWAN=MAC/Network (Star-of-Stars, Class A ประหยัดสุด)",
+    Zigbee:"Mesh self-forming/self-healing บน 2.4 GHz",
+    NBIoT:"LPWAN เครือข่ายมือถือ มี PSM/eDRX ประหยัดพลังงาน",
   };
 
-  // State
-  let topic = 'all';
-  let pool = [];   // ธนาคารหลังกรอง
-  let set = [];    // ชุดที่สุ่ม
-  let idx = 0;
-  let score = 0;
-  let answered = false;
-
-  // Utils
+  // ===== Helpers =====
   const ri = n => Math.floor(Math.random()*n);
   const shuffle = a => { for(let i=a.length-1;i>0;i--){ const j=ri(i+1); [a[i],a[j]]=[a[j],a[i]]; } return a; };
   const clamp = (v,min,max)=> Math.max(min, Math.min(max, v));
-
   const filterByTopic = tp => tp==='all' ? BANK.slice() : BANK.filter(x=>x.tag===tp);
+
+  // normalize: ลบช่องว่างหลายแบบ/ขึ้นบรรทัด/แท็บ/nbsp → เว้นวรรคเดียว + lower
+  const normalize = (s) => (s ?? "")
+    .replace(/\u00A0/g, ' ')        // nbsp → space
+    .replace(/\s+/g, ' ')           // บีบช่องว่าง/ขึ้นบรรทัด
+    .trim()
+    .toLowerCase();
 
   function explanationOf(item){
     if (item.exp && item.exp.trim().length) return item.exp;
@@ -60,8 +57,15 @@
   }
   function showExplain(html){ els.feedback.innerHTML = `<div class="explain">${html}</div>`; }
 
+  // ===== State =====
+  let topic = 'all';
+  let pool = [];
+  let set = [];
+  let idx = 0;
+  let score = 0;
+  let answered = false;
+
   function buildSet(){
-    // Reset ทุกครั้ง: แก้ปุ่มเริ่มชุดใหม่กดไม่ติด
     answered = false; score = 0; idx = 0;
     els.score.textContent = '0';
     els.feedback.innerHTML = '';
@@ -90,10 +94,8 @@
     els.question.textContent = item.q;
 
     // ตัวเลือก: เอาคำตอบจากเรื่องเดียวกันก่อน
-    const sameTopic = filterByTopic(topic==='all' ? item.tag : topic)
-      .filter(x => x !== item).map(x => x.a);
-    const otherTopic = BANK.filter(x => x !== item && x.tag !== (topic==='all'? item.tag : topic))
-      .map(x => x.a);
+    const sameTopic = filterByTopic(topic==='all' ? item.tag : topic).filter(x=>x!==item).map(x=>x.a);
+    const otherTopic = BANK.filter(x=>x!==item && x.tag!==(topic==='all'? item.tag : topic)).map(x=>x.a);
 
     const choices = [ item.a ];
     shuffle(sameTopic);
@@ -102,7 +104,6 @@
     while(choices.length<4 && otherTopic.length){ const p=otherTopic.shift(); if(!choices.includes(p)) choices.push(p); }
     shuffle(choices);
 
-    // วาดช้อยส์พร้อม badge และ data-answer เก็บข้อความจริง (กันปัญหาตัดตัวอักษร)
     els.choices.innerHTML = '';
     const letters = ['A','B','C','D'];
     choices.forEach((text, i)=>{
@@ -110,7 +111,10 @@
       li.className = 'choice';
       li.setAttribute('role','button');
       li.setAttribute('tabindex','0');
-      li.dataset.answer = text;       // เก็บคำตอบจริง
+      // เก็บทั้ง raw และ normalized
+      li.dataset.answer = text;
+      li.dataset.answerNorm = normalize(text);
+      li.dataset.badge = letters[i];
       li.innerHTML = `<span class="badge">${letters[i]}</span><span class="label">${text}</span>`;
       li.addEventListener('click', () => onPick(li, item));
       li.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ onPick(li, item); } });
@@ -130,15 +134,17 @@
     answered = true;
 
     const correct = item.a;
+    const correctNorm = normalize(correct);
+    const pickedNorm = liPicked.dataset.answerNorm;
 
+    // ไฮไลต์สะอาดด้วย normalized
     [...els.choices.children].forEach(li=>{
-      const text = li.dataset.answer;
-      if(text === correct) li.classList.add('correct');
-      if(li === liPicked && text !== correct) li.classList.add('wrong');
+      if(li.dataset.answerNorm === correctNorm) li.classList.add('correct');
+      if(li === liPicked && li.dataset.answerNorm !== correctNorm) li.classList.add('wrong');
     });
     lockChoices();
 
-    if(liPicked.dataset.answer === correct){
+    if(pickedNorm === correctNorm){
       score++;
       showExplain(`<b>ถูกต้อง</b> — ${explanationOf(item)}`);
     }else{
@@ -153,20 +159,18 @@
   function reveal(){
     if(answered) return;
     const item = set[idx];
-    const correct = item.a;
+    const correctNorm = normalize(item.a);
     [...els.choices.children].forEach(li=>{
-      if(li.dataset.answer === correct) li.classList.add('correct');
+      if(li.dataset.answerNorm === correctNorm) li.classList.add('correct');
     });
     lockChoices();
-    showExplain(`<b>เฉลย</b>: <u>${correct}</u><br>${explanationOf(item)}`);
+    showExplain(`<b>เฉลย</b>: <u>${item.a}</u><br>${explanationOf(item)}`);
     els.nextBtn.disabled = false;
     answered = true;
   }
 
   function next(){
-    if(idx < set.length-1){
-      idx++; render();
-    }
+    if(idx < set.length-1){ idx++; render(); }
   }
 
   // Events
@@ -179,7 +183,6 @@
     else if(e.key===' '){ e.preventDefault(); reveal(); }
   });
 
-  // Topic buttons
   topicBtns.forEach(btn=>{
     btn.addEventListener('click', ()=>{
       topicBtns.forEach(b=>b.classList.remove('active'));
