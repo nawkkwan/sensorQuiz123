@@ -1,149 +1,98 @@
-/* ====== Base Typography ====== */
+/* ===== Base (ธีมสว่าง อ่านง่าย) ===== */
 :root{
-  --bg:#f8fafc;
-  --fg:#0f172a;
-  --muted:#475569;
-  --border:#cbd5e1;
-  --border-strong:#94a3b8;
-  --brand:#0ea5e9;
-  --ok:#10b981;
-  --bad:#ef4444;
+  --bg:#f8fafc; --fg:#0f172a; --muted:#475569;
+  --border:#cbd5e1; --border-strong:#94a3b8; --brand:#0284c7;
+  --ok:#16a34a; --bad:#ef4444;
 
   --badge-a:#fde68a; /* amber-200 */
   --badge-b:#bfdbfe; /* blue-200 */
   --badge-c:#bbf7d0; /* green-200 */
-  --badge-d:#fbcfe8; /* pink-200 */
+  --badge-d:#fecaca; /* red-200 */
 }
-
 html,body{height:100%}
 body{
-  margin:0;
-  background:var(--bg);
-  color:var(--fg);
+  margin:0; background:var(--bg); color:var(--fg);
   font: 17px/1.7 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Thai", "Noto Sans", Arial, sans-serif;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
 }
-
-/* ====== Headings / Sections ====== */
-h1{letter-spacing:.2px}
 #status{font-size:14px; color:var(--muted)}
+h1{letter-spacing:.2px}
 
-/* ====== Buttons ====== */
-.btn-secondary, .btn-warn, .btn-success{
-  padding:.65rem 1rem; border-radius:.8rem; font-weight:600;
-  transition: background .15s ease, border-color .15s ease, box-shadow .15s ease, transform .02s ease;
-  will-change: transform;
+/* ===== Buttons ===== */
+.btn-secondary,.btn-warn,.btn-success{
+  padding:.65rem 1rem; border-radius:.9rem; font-weight:600;
+  transition: background .15s, border-color .15s, box-shadow .15s, transform .02s;
 }
-.btn-secondary{ background:#eef2f6; border:1px solid var(--border); color:var(--fg); }
+.btn-secondary{ background:#eef2f6; border:1px solid var(--border); color:var(--fg) }
 .btn-secondary:hover{ background:#e5ecf4; border-color:var(--border-strong) }
-.btn-secondary:active{ transform: translateY(1px) }
+.btn-secondary:active{ transform:translateY(1px) }
 
 .btn-warn{ background:#f59e0b; border:1px solid #f59e0b; color:#fff }
 .btn-warn:hover{ filter:brightness(1.05) }
-.btn-warn:active{ transform: translateY(1px) }
+.btn-warn:active{ transform:translateY(1px) }
 
 .btn-success{ background:var(--ok); border:1px solid var(--ok); color:#fff }
 .btn-success:hover{ filter:brightness(1.05) }
-.btn-success:active{ transform: translateY(1px) }
+.btn-success:active{ transform:translateY(1px) }
 
-/* ====== Topic Pills ====== */
+/* ===== Topic pills ===== */
 .pill{
-  background:#ffffff; border:1.5px solid var(--border); color:var(--fg);
+  background:#fff; border:1.6px solid var(--border); color:var(--fg);
   border-radius:9999px; padding:.45rem .85rem; font-weight:600;
-  transition: background .15s ease, border-color .15s ease, box-shadow .15s ease;
 }
-.pill:hover{ background:#fdfefe; border-color:var(--border-strong) }
+.pill:hover{ border-color:var(--border-strong); background:#fdfefe }
 .pill.active{ outline:2.5px solid var(--brand); outline-offset:2px }
 
-/* ====== Quiz Card Container ====== */
-.shadow-card{ box-shadow: 0 10px 30px rgba(15, 23, 42, .06); }
-#card{
-  scroll-margin-top: 84px; /* เผื่อ header sticky */
-}
+/* ===== Card ===== */
+.shadow-card{ box-shadow:0 10px 30px rgba(15,23,42,.06) }
 
-/* ====== Choices: LARGE, CLEAR, WITH BADGE ====== */
+/* ===== Choice items ===== */
 .choice{
   list-style:none; cursor:pointer;
-  display:grid; grid-template-columns: 42px 1fr; align-items:center; gap:.9rem;
+  display:grid; grid-template-columns: 56px minmax(0,1fr);  /* << สำคัญ: แก้คอลัมน์ข้อความ */
+  align-items:center; gap:1rem;
 
-  border-radius:1rem;
-  padding:1rem 1rem;
-  background:#fff;
-  border:2px solid var(--border);
-  box-shadow: 0 2px 0 rgba(15,23,42,.05);
-
-  transition: transform .02s ease, background .15s ease, border-color .15s ease, box-shadow .15s ease;
-  will-change: transform;
+  border-radius:1rem; padding:1rem 1rem;
+  background:#fff; border:2px solid var(--border);
+  box-shadow:0 2px 0 rgba(15,23,42,.05);
+  transition: transform .02s, background .15s, border-color .15s, box-shadow .15s;
 }
-.choice + .choice{ margin-top:.6rem } /* ระยะระหว่างช้อยส์ให้หายใจ */
+.choice + .choice{ margin-top:.75rem }
+.choice:hover{ background:#f9fbff; border-color:var(--border-strong); box-shadow:0 3px 0 rgba(15,23,42,.06) }
+.choice:active{ transform:translateY(1px) }
+.choice:focus-visible{ outline:3px solid var(--brand); outline-offset:2px }
 
-.choice:hover{
-  background:#f9fbff;
-  border-color:var(--border-strong);
-  box-shadow: 0 3px 0 rgba(15,23,42,.06);
-}
-.choice:active{ transform: translateY(1px) }
-
-/* keyboard focus */
-.choice:focus-visible{
-  outline:3px solid var(--brand);
-  outline-offset:2px;
-}
-
-/* Badge (A/B/C/D) — สีแยกแต่โทนอ่อน อ่านง่าย */
+/* Badge A/B/C/D — ใหญ่/เด่น/สีต่างกัน */
 .choice .badge{
-  width:42px; height:42px;
-  border-radius: 11px;
+  width:44px; height:44px; border-radius:12px;
   display:grid; place-items:center;
   font-weight:800; font-size:16px; color:#0b1220;
-  border:2px solid var(--border-strong);
-  background:#e2e8f0;
-  user-select:none;
+  border:2px solid var(--border-strong); background:#e2e8f0; user-select:none;
 }
 .choice[data-badge="A"] .badge{ background:var(--badge-a) }
 .choice[data-badge="B"] .badge{ background:var(--badge-b) }
 .choice[data-badge="C"] .badge{ background:var(--badge-c) }
 .choice[data-badge="D"] .badge{ background:var(--badge-d) }
 
-/* label text ให้อ่านง่ายขึ้น */
+/* Label (ข้อความช้อยส์) — หายใจได้, ไม่หั่นถี่ */
 .choice .label{
   font-size:18px; line-height:1.65;
+  white-space: normal;         /* ใช้การตัดปกติ */
+  word-break: break-word;      /* หักบรรทัดเมื่อคำยาวมาก */
+  overflow-wrap: break-word;   /* เผื่อเบราว์เซอร์บางตัว */
+  line-break: loose;           /* ไทย/เอเชียอ่านสวยขึ้น */
 }
 
-/* ====== States: Correct / Wrong ====== */
-.choice.correct{
-  background:#ecfdf5;
-  border-color:var(--ok);
-  box-shadow: 0 3px 0 rgba(16,185,129,.15);
-}
-.choice.correct .badge{
-  border-color:var(--ok);
-}
+/* States */
+.choice.correct{ background:#ecfdf5; border-color:var(--ok); box-shadow:0 3px 0 rgba(16,185,129,.15) }
+.choice.correct .badge{ border-color:var(--ok) }
+.choice.wrong{ background:#fff1f2; border-color:var(--bad); box-shadow:0 3px 0 rgba(239,68,68,.15) }
+.choice.wrong .badge{ border-color:var(--bad) }
+.choice[aria-disabled="true"]{ opacity:.98; cursor:default }
 
-.choice.wrong{
-  background:#fff1f2;
-  border-color:var(--bad);
-  box-shadow: 0 3px 0 rgba(239,68,68,.15);
-}
-.choice.wrong .badge{
-  border-color:var(--bad);
-}
-
-/* disable click afterตอบแล้ว */
-.choice[aria-disabled="true"]{
-  opacity:.98; cursor:default;
-}
-
-/* ====== Explanation Box ====== */
+/* Explanation */
 .explain{
-  margin-top:1rem;
-  background:#f1f5f9; color:var(--fg);
-  border:1.5px solid var(--border);
-  border-radius:.9rem;
-  padding: .9rem 1rem;
+  margin-top:1rem; background:#f1f5f9; color:var(--fg);
+  border:1.6px solid var(--border); border-radius:.9rem; padding:.9rem 1rem;
 }
 .explain b{ color:var(--brand) }
-
-/* ====== Small helpers ====== */
-.small-muted{ font-size:13px; color:var(--muted) }
