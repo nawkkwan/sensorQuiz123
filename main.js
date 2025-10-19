@@ -1,4 +1,4 @@
-/* Quiz Engine — Topic filter + New set reset + Always explanation + Badges + Safe compare */
+/* Quiz Engine — Similar Distractors + Topic filter + Explanations + Safe compare */
 (function(){
   const BANK = (window.QUIZ_BANK || []).slice();
 
@@ -20,36 +20,90 @@
 
   // อธิบายเริ่มต้นตามหมวด (ใช้เมื่อไม่มี exp ในข้อ)
   const defaultExp = {
-    ESP32:"สรุปสเปกและโหมดพลังงานของ ESP32 แบบใช้งานจริง",
+    ESP32:"สรุปสเปก/โหมดพลังงาน ESP32",
     Calibration:"คาลิเบรตเพื่อลดอคติ/ออฟเซ็ตและปรับสเกลให้ตรงมาตรฐาน",
-    Voltage:"ตัวแบ่งแรงดัน (R1/R2) แล้วอ่านด้วย ADC; คูณ divider gain เพื่อหา Vin",
-    Current:"ACS712 แปลงสนามแม่เหล็กเป็นแรงดัน ต้องลบ offset ก่อนคำนวณ",
-    MQ135:"ใช้อัตราส่วน Rs/Ro และกราฟ log-log ใน datasheet เพื่อหา PPM",
-    LoadCell:"Strain gauge ใน Wheatstone bridge + HX711 ขยายก่อนคาลิเบรตเชิงเส้น",
-    MAX30100:"หา IBI → BPM = 60000/Δt; smoothing/threshold ช่วยให้เสถียร",
-    KType:"Thermocouple แรงดันเล็ก ต้องชดเชย cold-junction (MAX6675)",
-    DS18B20:"โพรบดิจิทัล 1-Wire ความละเอียดสูง เหมาะงานทั่วไป",
-    Inductive:"สนามความถี่สูงเหนี่ยวนำ eddy current ในโลหะทำให้แอมพลิจูดลด",
+    Voltage:"ตัวแบ่งแรงดัน (R1/R2) + ADC; คูณ divider gain เพื่อหา Vin",
+    Current:"ACS712 ต้องลบ offset ก่อน แล้วหารด้วยความไว",
+    MQ135:"ใช้ Rs/Ro + กราฟ log-log ใน datasheet เพื่อหา PPM",
+    LoadCell:"Strain gauge + HX711 ขยาย ก่อนคาลิเบรตเชิงเส้น",
+    MAX30100:"หา IBI → BPM = 60000/Δt; smoothing/threshold",
+    KType:"Thermocouple ต้องชดเชย cold-junction (MAX6675)",
+    DS18B20:"โพรบดิจิทัล 1-Wire ช่วงกว้าง ความละเอียดสูง",
+    Inductive:"eddy current ในโลหะทำให้แอมพลิจูดลด",
     Comm:"HTTP = Request/Response; MQTT = Pub/Sub ผ่าน Broker",
-    WiFi:"Throughput < Data rate เพราะ overhead/ชน; ใช้ช่อง 1/6/11 ลดรบกวน",
-    BLE:"พลังงานต่ำ ส่งเป็นช่วง; มีช่องโฆษณา 37/38/39",
-    LoRa:"LoRa=PHY; LoRaWAN=MAC/Network (Star-of-Stars, Class A ประหยัดสุด)",
-    Zigbee:"Mesh self-forming/self-healing บน 2.4 GHz",
-    NBIoT:"LPWAN เครือข่ายมือถือ มี PSM/eDRX ประหยัดพลังงาน",
+    WiFi:"Throughput < Data rate เพราะ overhead/ชน; ช่อง 1/6/11",
+    BLE:"พลังงานต่ำ ส่งเป็นช่วง; ช่องโฆษณา 37/38/39",
+    LoRa:"LoRa=PHY; LoRaWAN=MAC/Network (Class A ประหยัดสุด)",
+    Zigbee:"Mesh self-forming/self-healing 2.4 GHz",
+    NBIoT:"LPWAN เครือข่ายมือถือ มี PSM/eDRX",
   };
 
-  // ===== Helpers =====
+  // ---------- Helpers ----------
   const ri = n => Math.floor(Math.random()*n);
   const shuffle = a => { for(let i=a.length-1;i>0;i--){ const j=ri(i+1); [a[i],a[j]]=[a[j],a[i]]; } return a; };
   const clamp = (v,min,max)=> Math.max(min, Math.min(max, v));
   const filterByTopic = tp => tp==='all' ? BANK.slice() : BANK.filter(x=>x.tag===tp);
 
-  // normalize: ลบช่องว่างหลายแบบ/ขึ้นบรรทัด/แท็บ/nbsp → เว้นวรรคเดียว + lower
+  // normalize: ลด noise การเทียบสตริง
   const normalize = (s) => (s ?? "")
-    .replace(/\u00A0/g, ' ')        // nbsp → space
-    .replace(/\s+/g, ' ')           // บีบช่องว่าง/ขึ้นบรรทัด
+    .replace(/\u00A0/g,' ')
+    .replace(/\s+/g,' ')
     .trim()
     .toLowerCase();
+
+  // ตัดคำคร่าว ๆ (ไทย/อังกฤษ)
+  const STOP = new Set(["the","a","an","and","or","of","to","is","are","กับ","และ","หรือ","คือ","ที่","ใน","เป็น"]);
+  function tokenize(str){
+    const clean = normalize(str).replace(/[^\p{L}\p{N}\s\.\/\-\+\=]/gu,' ');
+    const bySpace = clean.split(/\s+/).filter(Boolean).filter(w=>!STOP.has(w));
+    // bigram อักขระ (ช่วยภาษาไทยไม่มีเว้นวรรค)
+    const chars = clean.replace(/\s+/g,'');
+    const bigrams = [];
+    for(let i=0;i<chars.length-1;i++) bigrams.push(chars.slice(i,i+2));
+    return {words:new Set(bySpace), bigrams:new Set(bigrams)};
+  }
+
+  // Jaccard ของชุดคำ
+  const jaccard = (A,B) => {
+    if(!A.size && !B.size) return 0;
+    let inter=0; A.forEach(x=>{ if(B.has(x)) inter++; });
+    const uni = A.size + B.size - inter;
+    return inter/uni;
+  };
+  // Dice ของชุด bigram
+  const dice = (A,B) => {
+    if(!A.size && !B.size) return 0;
+    let inter=0; A.forEach(x=>{ if(B.has(x)) inter++; });
+    return (2*inter)/(A.size+B.size);
+  };
+
+  // คะแนนความคล้ายรวม (ปรับน้ำหนักได้)
+  function similarScore(a,b){
+    const ta = tokenize(a), tb = tokenize(b);
+    const jw = jaccard(ta.words, tb.words);
+    const dc = dice(ta.bigrams, tb.bigrams);
+    // น้ำหนัก: ให้ bigram เด่นขึ้นสำหรับไทย
+    return 0.4*jw + 0.6*dc;
+  }
+
+  // สร้างตัวเลือกหลอกแบบ "คล้ายกัน"
+  function buildSimilarDistractors(correct, poolAnswers, k){
+    const normCorrect = normalize(correct);
+    // ตัดคำตอบที่เหมือนเดิมจริง ๆ
+    const candidates = poolAnswers.filter(t => normalize(t) !== normCorrect);
+    // ให้คะแนนความคล้าย แล้วเลือก Top-k
+    const scored = candidates.map(t => ({t, s: similarScore(correct, t)}));
+    scored.sort((a,b)=> b.s - a.s);
+    const picks = [];
+    for(const {t} of scored){
+      if(picks.length>=k) break;
+      // กันซ้ำแบบ normalize
+      if(!picks.some(x=>normalize(x)===normalize(t))){
+        picks.push(t);
+      }
+    }
+    return picks;
+  }
 
   function explanationOf(item){
     if (item.exp && item.exp.trim().length) return item.exp;
@@ -57,7 +111,7 @@
   }
   function showExplain(html){ els.feedback.innerHTML = `<div class="explain">${html}</div>`; }
 
-  // ===== State =====
+  // ---------- State ----------
   let topic = 'all';
   let pool = [];
   let set = [];
@@ -93,16 +147,30 @@
     const item = set[idx];
     els.question.textContent = item.q;
 
-    // ตัวเลือก: เอาคำตอบจากเรื่องเดียวกันก่อน
-    const sameTopic = filterByTopic(topic==='all' ? item.tag : topic).filter(x=>x!==item).map(x=>x.a);
-    const otherTopic = BANK.filter(x=>x!==item && x.tag!==(topic==='all'? item.tag : topic)).map(x=>x.a);
+    // 1) ถ้ามี distractors ระบุเอง ใช้ก่อน (ควบคุมคุณภาพเต็ม)
+    let distractors = Array.isArray(item.distractors) ? item.distractors.slice(0,3) : [];
 
-    const choices = [ item.a ];
-    shuffle(sameTopic);
-    while(choices.length<4 && sameTopic.length){ const p=sameTopic.shift(); if(!choices.includes(p)) choices.push(p); }
-    shuffle(otherTopic);
-    while(choices.length<4 && otherTopic.length){ const p=otherTopic.shift(); if(!choices.includes(p)) choices.push(p); }
-    shuffle(choices);
+    // 2) ไม่พอ → หา "คล้ายกัน" จากคำตอบในเรื่องเดียวกัน
+    if(distractors.length < 3){
+      const sameTopicAnswers = filterByTopic(topic==='all'? item.tag : topic)
+        .filter(x => x !== item).map(x => x.a);
+      const need = 3 - distractors.length;
+      distractors = distractors.concat(
+        buildSimilarDistractors(item.a, sameTopicAnswers, need)
+      );
+    }
+
+    // 3) ยังไม่พอ (กรณีธนาคารเรื่องนั้นน้อย) → เติมจากทุกเรื่องที่คล้ายที่สุด
+    if(distractors.length < 3){
+      const otherAnswers = BANK.filter(x => x!==item).map(x => x.a);
+      const need = 3 - distractors.length;
+      distractors = distractors.concat(
+        buildSimilarDistractors(item.a, otherAnswers, need)
+      );
+    }
+
+    // สร้างช้อยส์ 4 ตัว
+    const choices = shuffle([ item.a, ...distractors ].slice(0,4));
 
     els.choices.innerHTML = '';
     const letters = ['A','B','C','D'];
@@ -111,7 +179,6 @@
       li.className = 'choice';
       li.setAttribute('role','button');
       li.setAttribute('tabindex','0');
-      // เก็บทั้ง raw และ normalized
       li.dataset.answer = text;
       li.dataset.answerNorm = normalize(text);
       li.dataset.badge = letters[i];
@@ -133,11 +200,9 @@
     if(answered) return;
     answered = true;
 
-    const correct = item.a;
-    const correctNorm = normalize(correct);
+    const correctNorm = normalize(item.a);
     const pickedNorm = liPicked.dataset.answerNorm;
 
-    // ไฮไลต์สะอาดด้วย normalized
     [...els.choices.children].forEach(li=>{
       if(li.dataset.answerNorm === correctNorm) li.classList.add('correct');
       if(li === liPicked && li.dataset.answerNorm !== correctNorm) li.classList.add('wrong');
@@ -148,7 +213,7 @@
       score++;
       showExplain(`<b>ถูกต้อง</b> — ${explanationOf(item)}`);
     }else{
-      showExplain(`<b>เฉลย</b>: <u>${correct}</u><br>${explanationOf(item)}`);
+      showExplain(`<b>เฉลย</b>: <u>${item.a}</u><br>${explanationOf(item)}`);
     }
 
     els.score.textContent = score.toString();
